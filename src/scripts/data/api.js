@@ -171,15 +171,8 @@ async function getStoryDetail(token, storyID) {
   }
 }
 
-
-// VAPID PUBLIC KEYS : BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk
 async function subscribeNotification(token, subscription) {
   try {
-    // Ensure subscription has the expected format
-    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
-      throw new Error('Invalid subscription object');
-    }
-
     const response = await fetch(ENDPOINTS.SUBSCRIBE, {
       method: 'POST',
       headers: {

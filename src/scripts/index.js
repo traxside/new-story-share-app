@@ -108,24 +108,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
-
-// Accept HMR updates for development
-if (module.hot) {
-  // Accept updates for specific modules only
-  module.hot.accept('./pages/app', () => {
-    console.log('Hot Module Replacement: App module updated');
-  });
-  
-  module.hot.accept('./utils/notification-helper', () => {
-    console.log('Hot Module Replacement: Notification helper updated');
-  });
-  
-  // Accept updates for modules that should not cause page refresh
-  module.hot.accept('./data/auth', () => {
-    console.log('Hot Module Replacement: Auth module updated');
-  });
-  
-  module.hot.accept('./data/idb', () => {
-    console.log('Hot Module Replacement: IndexedDB module updated');
-  });
-}
