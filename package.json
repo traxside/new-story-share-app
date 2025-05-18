@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "build": "webpack --config webpack.prod.js",
     "start-dev": "webpack serve --config webpack.dev.js",
+    "build-sw": "webpack --config webpack.dev.js",
+    "build": "webpack --config webpack.prod.js",
     "serve": "http-server dist"
   },
   "keywords": [],

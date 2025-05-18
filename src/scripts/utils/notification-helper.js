@@ -6,7 +6,17 @@ import { showAlert } from './index';
 const registerServiceWorker = async (swPath) => {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register(swPath);
+      // Ensure the path is correct and not undefined
+      if (!swPath) {
+        throw new Error('Service worker path is undefined');
+      }
+      
+      // Ensure the path starts with a leading slash if it doesn't include the origin
+      const absoluteSwPath = swPath.startsWith('http') || swPath.startsWith('/') 
+        ? swPath 
+        : `/${swPath}`;
+        
+      const registration = await navigator.serviceWorker.register(absoluteSwPath);
       console.log('Service Worker registered with scope:', registration.scope);
       return registration;
     } catch (error) {

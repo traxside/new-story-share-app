@@ -6,8 +6,14 @@ import 'regenerator-runtime';
 import Auth from './data/auth';
 import StoryIdb from './data/idb';
 
-// Immediately invoke async function to handle service worker registration
+// Service worker registration
 const registerSW = async () => {
+  // Skip service worker registration in development with HMR to avoid issues
+  if (process.env.NODE_ENV !== 'production' && module.hot) {
+    console.log('Development with HMR detected - skipping service worker registration');
+    return null;
+  }
+  
   try {
     return await registerServiceWorker('/service-worker.js');
   } catch (error) {
@@ -105,5 +111,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Accept HMR updates for development
 if (module.hot) {
-  module.hot.accept();
+  // Accept updates for specific modules only
+  module.hot.accept('./pages/app', () => {
+    console.log('Hot Module Replacement: App module updated');
+  });
+  
+  module.hot.accept('./utils/notification-helper', () => {
+    console.log('Hot Module Replacement: Notification helper updated');
+  });
+  
+  // Accept updates for modules that should not cause page refresh
+  module.hot.accept('./data/auth', () => {
+    console.log('Hot Module Replacement: Auth module updated');
+  });
+  
+  module.hot.accept('./data/idb', () => {
+    console.log('Hot Module Replacement: IndexedDB module updated');
+  });
 }

@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -15,19 +16,26 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(png|jpe?g|gif)$/i,
+        test: /\.(png|jpe?g|gif|svg)$/i,
         type: 'asset/resource',
+        generator: {
+          filename: 'images/[name][ext]',
+        },
       },
     ],
   },
   plugins: [
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src/index.html'),
+      filename: 'index.html',
       meta: {
         viewport: 'width=device-width, initial-scale=1, shrink-to-fit=no',
         'theme-color': '#777',
         description: 'A progressive web app for reading and sharing stories',
       },
+      // Inject the service worker registration script
+      scriptLoading: 'defer',
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -43,4 +51,17 @@ module.exports = {
       ],
     }),
   ],
+  optimization: {
+    // Split chunks for better caching
+    splitChunks: {
+      chunks: 'all',
+      cacheGroups: {
+        defaultVendors: {
+          test: /[\\/]node_modules[\\/]/,
+          priority: -10,
+          name: 'vendors',
+        },
+      },
+    },
+  },
 };
