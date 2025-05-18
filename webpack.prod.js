@@ -5,6 +5,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const { InjectManifest } = require('workbox-webpack-plugin');
 
 module.exports = merge(common, {
   mode: 'production',
@@ -45,6 +46,15 @@ module.exports = merge(common, {
     new CleanWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css',
+    }),
+    // InjectManifest for production
+    new InjectManifest({
+      swSrc: path.resolve(__dirname, 'src/scripts/service-worker.js'),
+      swDest: 'service-worker.js',
+      // Exclude hot update files
+      exclude: [/\.hot-update\.(js|json)$/],
+      // Increase the maximum file size to cache (3MB in bytes)
+      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
     }),
   ],
   output: {

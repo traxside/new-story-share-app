@@ -4,34 +4,12 @@ importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox
 // Cache Name
 const CACHE_NAME = 'story-app-v1';
 
-// Application Shell - critical assets that make up the app shell
-const appShellFiles = [
-  '/',
-  '/index.html',
-  '/app.bundle.js',
-  '/favicon.png',
-  '/manifest.json',
-  '/images/logo.png'
-];
-
-// Check if workbox is available
-if (typeof workbox !== 'undefined') {
+// Use Workbox for better caching strategies
+if (workbox) {
   console.log('Workbox is loaded');
 
-  // Exclude hot update files from precaching to avoid conflicts with HMR
-  workbox.routing.registerRoute(
-    /.*\.hot-update\.json$/,
-    new workbox.strategies.NetworkOnly()
-  );
-
-  // Exclude webpack-dev-server from caching to avoid HMR conflicts
-  workbox.routing.registerRoute(
-    /^http:\/\/localhost:\d+\/sockjs-node/,
-    new workbox.strategies.NetworkOnly()
-  );
-
-  // Cache the app shell - the core assets needed to load the app
-  workbox.precaching.precacheAndRoute(appShellFiles);
+  // This line is crucial - it's the placeholder that Workbox will replace with the precache manifest
+  workbox.precaching.precacheAndRoute(self.__WB_MANIFEST);
 
   // Cache CSS and JavaScript files
   workbox.routing.registerRoute(
