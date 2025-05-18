@@ -1,94 +1,98 @@
 import ProfilePresenter from './profile-presenter.js';
 import Auth from '../../data/auth';
 import Story from '../../data/story';
-import { registerServiceWorker, subscribeUserToPush, unsubscribeUserFromPush } from '../../utils/notification-helper';
+import { 
+  isPushNotificationSupported, 
+  isUserSubscribed, 
+  togglePushNotification,
+  updateSubscriptionButton,
+  registerServiceWorker
+} from '../../utils/notification-helper';
 import { showAlert } from '../../utils/index';
 
-export default class ProfilePage {
+class ProfilePage {
   #presenter;
+  #swRegistration = null;
   
   constructor() {
-    this.#presenter = new ProfilePresenter({ 
+    this.#presenter = new ProfilePresenter({
       view: this,
-      authModel: Auth,
-      storyModel: Story
+      model: Story
     });
   }
 
   async render() {
-    const user = Auth.getUser();
-    
-    if (!user) {
-      window.location.hash = '#/login';
-      return '';
+    const currentUser = Auth.getUser();
+
+    if (!currentUser) {
+      return `
+        <section class="container">
+          <h1>Profile</h1>
+          <div class="alert alert-danger">
+            You need to login first to view your profile
+          </div>
+        </section>
+      `;
     }
-    
+
     return `
       <section class="container profile-page">
         <h1 class="page-title">Profile</h1>
         
-        <div class="profile-info">
+        <div class="profile-card">
           <div class="profile-header">
             <div class="profile-avatar">
-              <i class="fas fa-user-circle"></i>
+              <div class="avatar-placeholder">${currentUser.name.charAt(0).toUpperCase()}</div>
             </div>
-            <div class="profile-details">
-              <h2>${user.name}</h2>
-              <p>${user.email}</p>
+            <div class="profile-info">
+              <h2>${currentUser.name}</h2>
+              <p>${currentUser.email}</p>
             </div>
           </div>
           
           <div class="profile-actions">
-            <button id="logout-button" class="button button-danger">
-              <i class="fas fa-sign-out-alt"></i> Logout
-            </button>
-            
-            <div class="notification-settings">
-              <h3>Notification Settings</h3>
-              <div class="form-group">
-                <label for="notification-toggle">Push Notifications</label>
-                <div class="toggle-switch">
-                  <input type="checkbox" id="notification-toggle" class="toggle-input">
-                  <label for="notification-toggle" class="toggle-label"></label>
-                </div>
-              </div>
-            </div>
+            <button id="logout-btn" class="btn btn-danger">Logout</button>
           </div>
         </div>
         
-        <div class="offline-storage">
-          <h3>Offline Storage</h3>
-          <div class="storage-info">
-            <p>Manage your stored stories for offline reading.</p>
-            <div class="storage-actions">
-              <button id="view-stored-button" class="button button-primary">
-                <i class="fas fa-eye"></i> View Stored Stories
-              </button>
-              <button id="clear-storage-button" class="button button-warning">
-                <i class="fas fa-trash"></i> Clear Storage
+        <div class="profile-section">
+          <h2>App Settings</h2>
+          
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Push Notifications</h3>
+              <p>Get notified when new stories are posted</p>
+            </div>
+            <div class="setting-action">
+              <button id="notification-btn" class="btn btn-primary" disabled>
+                Loading...
               </button>
             </div>
           </div>
           
-          <div id="stored-stories-container" class="stored-stories-container" style="display: none;">
-            <h4>Stored Stories</h4>
-            <div id="stored-stories-list" class="stored-stories-list">
-              <p class="loading-text">Loading stored stories...</p>
+          <div class="setting-item">
+            <div class="setting-info">
+              <h3>Offline Data</h3>
+              <p>Manage stories saved for offline use</p>
+            </div>
+            <div class="setting-action">
+              <button id="offline-data-btn" class="btn btn-primary">Manage</button>
             </div>
           </div>
         </div>
         
-        <div class="app-info">
-          <h3>App Information</h3>
-          <div class="app-details">
-            <p><strong>Version:</strong> 1.0.0</p>
-            <p><strong>Mode:</strong> <span id="connection-status">Online</span></p>
-            <p><strong>Installable:</strong> <span id="installable-status">Checking...</span></p>
-            <div id="install-app-container" style="display: none;">
-              <button id="install-app-button" class="button button-primary">
-                <i class="fas fa-download"></i> Install App
-              </button>
+        <div id="offline-data-container" class="profile-section offline-data" style="display: none;">
+          <h2>Saved Stories <span id="offline-story-count">(0)</span></h2>
+          <p class="section-description">These stories are available for offline viewing</p>
+          
+          <div id="offline-stories-list" class="offline-stories-list">
+            <div class="loading-container">
+              <div class="lds-ripple"><div></div><div></div></div>
             </div>
+          </div>
+          
+          <div class="offline-actions">
+            <button id="clear-all-btn" class="btn btn-danger">Clear All Offline Data</button>
           </div>
         </div>
       </section>
@@ -96,150 +100,127 @@ export default class ProfilePage {
   }
 
   async afterRender() {
-    // Initialize presenter
-    await this.#presenter.init();
-    
-    // Set up event listeners
-    document.getElementById('logout-button').addEventListener('click', () => {
-      this.#presenter.logout();
-    });
-    
-    document.getElementById('notification-toggle').addEventListener('change', (event) => {
-      this.#presenter.toggleNotifications(event.target.checked);
-    });
-    
-    document.getElementById('view-stored-button').addEventListener('click', () => {
-      this.#presenter.toggleStoredStoriesView();
-    });
-    
-    document.getElementById('clear-storage-button').addEventListener('click', () => {
-      this.#presenter.clearStorage();
-    });
-    
-    // Check connection status
-    this.updateConnectionStatus();
-    window.addEventListener('online', () => this.updateConnectionStatus());
-    window.addEventListener('offline', () => this.updateConnectionStatus());
-    
-    // Check installability
-    this.checkInstallability();
-    
-    // Check notification permission
-    this.#presenter.checkNotificationPermission();
-  }
-  
-  updateConnectionStatus() {
-    const statusElement = document.getElementById('connection-status');
-    if (navigator.onLine) {
-      statusElement.textContent = 'Online';
-      statusElement.classList.remove('offline');
-      statusElement.classList.add('online');
-    } else {
-      statusElement.textContent = 'Offline';
-      statusElement.classList.remove('online');
-      statusElement.classList.add('offline');
-    }
-  }
-  
-  async checkInstallability() {
-    const installableStatusElement = document.getElementById('installable-status');
-    const installAppContainer = document.getElementById('install-app-container');
-    
-    // Check if the app is already installed
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    
-    if (isStandalone) {
-      installableStatusElement.textContent = 'Already Installed';
-      return;
-    }
-    
-    // Store the deferredPrompt for later use
-    let deferredPrompt;
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-      // Prevent the default prompt
-      e.preventDefault();
-      
-      // Store the event for later use
-      deferredPrompt = e;
-      
-      // Update UI to show it's installable
-      installableStatusElement.textContent = 'Yes';
-      installAppContainer.style.display = 'block';
-      
-      // Add click handler for install button
-      document.getElementById('install-app-button').addEventListener('click', async () => {
-        // Show the install prompt
-        deferredPrompt.prompt();
-        
-        // Wait for the user to respond to the prompt
-        const choiceResult = await deferredPrompt.userChoice;
-        
-        if (choiceResult.outcome === 'accepted') {
-          showAlert('App installation started!', 'success');
-          installAppContainer.style.display = 'none';
-          installableStatusElement.textContent = 'Installing...';
-        } else {
-          showAlert('App installation declined', 'info');
-        }
-        
-        // Clear the deferredPrompt
-        deferredPrompt = null;
+    // Setup logout functionality
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        Auth.logout();
+        window.location.hash = '#/';
       });
-    });
-    
-    // If no install prompt after 3 seconds, update UI
-    setTimeout(() => {
-      if (!deferredPrompt) {
-        installableStatusElement.textContent = 'Not available';
+    }
+
+    // Handle push notification subscription
+    if (isPushNotificationSupported()) {
+      this.#swRegistration = await registerServiceWorker();
+      const notificationBtn = document.getElementById('notification-btn');
+      
+      if (this.#swRegistration && notificationBtn) {
+        // Update button state based on subscription status
+        await updateSubscriptionButton(this.#swRegistration, notificationBtn);
+        
+        // Add click event listener
+        notificationBtn.addEventListener('click', async () => {
+          await togglePushNotification(this.#swRegistration, notificationBtn);
+        });
       }
-    }, 3000);
+    } else {
+      const notificationBtn = document.getElementById('notification-btn');
+      if (notificationBtn) {
+        notificationBtn.textContent = 'Not Supported';
+        notificationBtn.disabled = true;
+      }
+    }
+
+    // Setup offline data management
+    const offlineDataBtn = document.getElementById('offline-data-btn');
+    const offlineDataContainer = document.getElementById('offline-data-container');
+    
+    if (offlineDataBtn && offlineDataContainer) {
+      offlineDataBtn.addEventListener('click', () => {
+        const isVisible = offlineDataContainer.style.display !== 'none';
+        offlineDataContainer.style.display = isVisible ? 'none' : 'block';
+        
+        if (!isVisible) {
+          this.#presenter.loadOfflineStories();
+        }
+      });
+    }
+
+    // Setup clear all button
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', async () => {
+        if (confirm('Are you sure you want to clear all offline data? This cannot be undone.')) {
+          await this.#presenter.clearAllOfflineData();
+        }
+      });
+    }
   }
   
-  showStoredStories(stories) {
-    const container = document.getElementById('stored-stories-list');
+  showOfflineStories(stories) {
+    const offlineStoriesList = document.getElementById('offline-stories-list');
+    const offlineStoryCount = document.getElementById('offline-story-count');
     
-    if (stories.length === 0) {
-      container.innerHTML = '<p class="empty-message">No stories stored for offline reading</p>';
-      return;
+    if (offlineStoriesList) {
+      if (stories.length === 0) {
+        offlineStoriesList.innerHTML = `
+          <div class="empty-message">No stories saved for offline use</div>
+        `;
+      } else {
+        offlineStoriesList.innerHTML = stories.map(story => `
+          <div class="offline-story-item" data-id="${story.id}">
+            <div class="offline-story-info">
+              <h3>${story.name}</h3>
+              <p>${story.description.length > 100 ? story.description.slice(0, 100) + '...' : story.description}</p>
+            </div>
+            <div class="offline-story-actions">
+              <button class="btn btn-primary view-story-btn" data-id="${story.id}">View</button>
+              <button class="btn btn-danger delete-story-btn" data-id="${story.id}">Delete</button>
+            </div>
+          </div>
+        `).join('');
+        
+        // Add event listeners for view and delete buttons
+        document.querySelectorAll('.view-story-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const storyId = btn.dataset.id;
+            window.location.hash = `#/story/${storyId}`;
+          });
+        });
+        
+        document.querySelectorAll('.delete-story-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const storyId = btn.dataset.id;
+            await this.#presenter.deleteOfflineStory(storyId);
+          });
+        });
+      }
     }
     
-    const storiesHTML = stories.map(story => `
-      <div class="stored-story-item">
-        <div class="stored-story-info">
-          <h4>${story.name}</h4>
-          <p class="stored-story-desc">${story.description.substring(0, 100)}${story.description.length > 100 ? '...' : ''}</p>
-        </div>
-        <div class="stored-story-actions">
-          <a href="#/story/${story.id}" class="button button-small button-primary">View</a>
-          <button class="button button-small button-danger delete-story" data-id="${story.id}">Delete</button>
-        </div>
-      </div>
-    `).join('');
-    
-    container.innerHTML = storiesHTML;
-    
-    // Add event listeners for delete buttons
-    container.querySelectorAll('.delete-story').forEach(button => {
-      button.addEventListener('click', (e) => {
-        const storyId = e.target.dataset.id;
-        this.#presenter.deleteStoredStory(storyId);
-      });
-    });
+    if (offlineStoryCount) {
+      offlineStoryCount.textContent = `(${stories.length})`;
+    }
   }
   
-  setNotificationToggle(enabled) {
-    document.getElementById('notification-toggle').checked = enabled;
+  showLoading() {
+    const offlineStoriesList = document.getElementById('offline-stories-list');
+    if (offlineStoriesList) {
+      offlineStoriesList.innerHTML = `
+        <div class="loading-container">
+          <div class="lds-ripple"><div></div><div></div></div>
+        </div>
+      `;
+    }
   }
   
-  toggleStoredStoriesContainer(show) {
-    const container = document.getElementById('stored-stories-container');
-    container.style.display = show ? 'block' : 'none';
-    
-    // Update button text
-    const viewButton = document.getElementById('view-stored-button');
-    viewButton.innerHTML = show ? 
-      '<i class="fas fa-eye-slash"></i> Hide Stored Stories' : 
-      '<i class="fas fa-eye"></i> View Stored Stories';
+  showError(message) {
+    const offlineStoriesList = document.getElementById('offline-stories-list');
+    if (offlineStoriesList) {
+      offlineStoriesList.innerHTML = `
+        <div class="error-message">${message}</div>
+      `;
+    }
   }
 }
+
+export default ProfilePage;

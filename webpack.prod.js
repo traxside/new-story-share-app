@@ -47,7 +47,6 @@ module.exports = merge(common, {
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css',
     }),
-    // Generate service worker
     new WorkboxPlugin.InjectManifest({
       swSrc: path.resolve(__dirname, 'src/scripts/service-worker.js'),
       swDest: 'service-worker.js',

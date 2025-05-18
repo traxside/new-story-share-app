@@ -1,6 +1,5 @@
 // Service Worker for caching and push notifications
 import 'regenerator-runtime';
-import CONFIG from './scripts/config';
 
 // Cache Name
 const CACHE_NAME = 'story-app-v1';
@@ -11,17 +10,16 @@ const assetsToCache = [
   './index.html',
   './public/favicon.png',
   './public/images/logo.png',
-  './app.bundle.js',
-  './app.webmanifest',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css',
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js',
 ];
 
 // Install Service Worker and cache resources
 self.addEventListener('install', (event) => {
+  console.log('Installing Service Worker...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
+      console.log('Caching app shell...');
       return cache.addAll(assetsToCache);
     })
   );
@@ -29,12 +27,16 @@ self.addEventListener('install', (event) => {
 
 // Activate Service Worker and clean up old caches
 self.addEventListener('activate', (event) => {
+  console.log('Activating Service Worker...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
           .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => caches.delete(cacheName))
+          .map((cacheName) => {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          })
       );
     })
   );
