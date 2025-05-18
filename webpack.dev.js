@@ -26,7 +26,7 @@ module.exports = merge(common, {
       },
     },
     devMiddleware: {
-      writeToDisk: true, // Necessary for service worker to access files
+      writeToDisk: true,
     },
   },
 });

@@ -3,11 +3,10 @@ import Auth from '../data/auth';
 import { showAlert } from './index';
 
 // Register the service worker
-const registerServiceWorker = async () => {
+const registerServiceWorker = async (swPath = '/service-worker.js') => {
   if ('serviceWorker' in navigator) {
     try {
-      // Important: Register the service worker from the root path
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      const registration = await navigator.serviceWorker.register(swPath);
       console.log('Service Worker registered with scope:', registration.scope);
       return registration;
     } catch (error) {

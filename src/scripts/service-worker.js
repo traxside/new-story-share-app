@@ -1,104 +1,79 @@
 // Service Worker for caching and push notifications
-import 'regenerator-runtime';
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
 
 // Cache Name
 const CACHE_NAME = 'story-app-v1';
 
-// List of assets to cache for offline usage
-const assetsToCache = [
-  './',
-  './index.html',
-  './favicon.png',
-  './manifest.json',
-  './images/logo.png',
-  'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js',
+// Application Shell - critical assets that make up the app shell
+const appShellFiles = [
+  '/',
+  '/index.html',
+  '/app.bundle.js',
+  '/favicon.png',
+  '/manifest.json',
+  '/images/logo.png'
 ];
 
-// Install Service Worker and cache resources
-self.addEventListener('install', (event) => {
-  console.log('Installing Service Worker...');
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('Caching app shell...');
-      return cache.addAll(assetsToCache);
+// Use Workbox for better caching strategies
+if (workbox) {
+  console.log('Workbox is loaded');
+
+  // Cache the app shell - the core assets needed to load the app
+  workbox.precaching.precacheAndRoute(appShellFiles);
+
+  // Cache CSS and JavaScript files
+  workbox.routing.registerRoute(
+    ({request}) => request.destination === 'style' || request.destination === 'script',
+    new workbox.strategies.StaleWhileRevalidate({
+      cacheName: 'static-resources',
     })
   );
-});
 
-// Activate Service Worker and clean up old caches
-self.addEventListener('activate', (event) => {
-  console.log('Activating Service Worker...');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          })
-      );
+  // Cache images
+  workbox.routing.registerRoute(
+    ({request}) => request.destination === 'image',
+    new workbox.strategies.CacheFirst({
+      cacheName: 'images',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        }),
+      ],
     })
   );
-});
 
-// Network first, falling back to cache strategy
-self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin) && 
-      !event.request.url.startsWith('https://story-api.dicoding.dev')) {
-    return;
-  }
-
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // API requests - Network first with cache fallback
-  if (event.request.url.includes('/v1/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // If the response is valid, clone it and store it in the cache
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // If the network fails, try to serve from cache
-          return caches.match(event.request);
-        })
-    );
-    return;
-  }
-
-  // For non-API requests, cache first with network fallback
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response; // Return from cache if found
-      }
-      
-      // Fetch from network if not in cache
-      return fetch(event.request).then((networkResponse) => {
-        // Cache the fetched response
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return networkResponse;
-      });
+  // Handle API requests with Network First strategy
+  workbox.routing.registerRoute(
+    new RegExp('https://story-api\\.dicoding\\.dev/v1/'),
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'api-responses',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 100,
+          maxAgeSeconds: 24 * 60 * 60, // 1 Day
+        }),
+      ],
     })
   );
-});
+
+  // Handle other routes with a Network First, falling back to cache
+  workbox.routing.registerRoute(
+    ({request}) => request.mode === 'navigate',
+    new workbox.strategies.NetworkFirst({
+      cacheName: 'pages',
+      plugins: [
+        new workbox.expiration.ExpirationPlugin({
+          maxEntries: 50,
+          maxAgeSeconds: 24 * 60 * 60, // 1 Day
+        }),
+      ],
+    })
+  );
+
+} else {
+  console.log('Workbox could not be loaded. Offline functionality will be limited.');
+}
 
 // Handle Push Notifications
 self.addEventListener('push', function(event) {
@@ -110,8 +85,8 @@ self.addEventListener('push', function(event) {
   const title = data.title || 'New Story!';
   const options = {
     body: data.message || 'Someone shared a new story!',
-    icon: './favicon.png',
-    badge: './favicon.png',
+    icon: '/images/logo.png',
+    badge: '/favicon.png',
     data: {
       url: data.url || '/',
     },

@@ -147,17 +147,15 @@ class Story {
     }
   }
   
-  // New method to manage stored stories
+  // Methods to manage stored stories
   static async getStoredStories() {
     return await StoryIdb.getAllStories();
   }
   
-  // New method to delete a stored story
   static async deleteStoredStory(id) {
     return await StoryIdb.deleteStory(id);
   }
   
-  // New method to clear all stored stories
   static async clearStoredStories() {
     return await StoryIdb.clearAll();
   }
