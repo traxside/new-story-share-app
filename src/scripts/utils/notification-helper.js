@@ -3,10 +3,10 @@ import Auth from '../data/auth';
 import { showAlert } from './index';
 
 // Register the service worker
-const registerServiceWorker = async (swPath = '/service-worker.js') => {
+const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register(swPath);
+      const registration = await navigator.serviceWorker.register('../service-worker.js');
       console.log('Service Worker registered with scope:', registration.scope);
       return registration;
     } catch (error) {
@@ -38,31 +38,34 @@ const subscribeUserToPush = async (swRegistration) => {
     // Check if service worker is registered and push is supported
     if (!swRegistration || !isPushNotificationSupported()) {
       console.log('Push notification not supported');
-      return;
+    //   return null;
     }
     
     // Check if user is already subscribed
     const isSubscribed = await isUserSubscribed(swRegistration);
     if (isSubscribed) {
       console.log('User is already subscribed to push notifications');
-      return;
+      const subscription = await swRegistration.pushManager.getSubscription();
+      return subscription;
     }
     
     // Get token
     const token = Auth.getToken();
     if (!token) {
       console.log('User must be authenticated to subscribe to notifications');
-      return;
+      showAlert('You must be logged in to enable notifications', 'warning');
+    //   return null;
     }
 
     // Get permission from user
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
       console.log('Notification permission denied');
-      return;
+      showAlert('Notification permission denied', 'warning');
+    //   return null;
     }
 
-    // VAPID key from the API - This is your public VAPID key
+    // VAPID key from the API
     const vapidPublicKey = 'BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk';
     
     // Convert VAPID key to array buffer
@@ -74,12 +77,16 @@ const subscribeUserToPush = async (swRegistration) => {
       applicationServerKey: applicationServerKey
     });
     
+    // Convert subscription to JSON for API
+    const subscriptionJSON = subscription.toJSON();
+    
     // Send subscription to server
-    const response = await subscribeNotification(token, subscription);
+    const response = await subscribeNotification(token, subscriptionJSON);
     
     if (response.error) {
       console.error('Failed to subscribe to push notifications:', response.message);
       showAlert('Failed to subscribe to push notifications', 'error');
+    //   return null;
     } else {
       console.log('Successfully subscribed to push notifications');
       showAlert('Push notifications enabled!', 'success');
@@ -88,9 +95,8 @@ const subscribeUserToPush = async (swRegistration) => {
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
     showAlert('Error enabling push notifications', 'error');
+    // return null;
   }
-  
-  return null;
 };
 
 // Unsubscribe user from push notification

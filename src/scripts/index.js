@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   // Register service worker first (before rendering app)
-  const swRegistration = await registerServiceWorker();
+  const swRegistration = await registerServiceWorker('/service-worker.js');
   
   // Then render the application
   await app.renderPage();
