@@ -14,9 +14,21 @@ const appShellFiles = [
   '/images/logo.png'
 ];
 
-// Use Workbox for better caching strategies
-if (workbox) {
+// Check if workbox is available
+if (typeof workbox !== 'undefined') {
   console.log('Workbox is loaded');
+
+  // Exclude hot update files from precaching to avoid conflicts with HMR
+  workbox.routing.registerRoute(
+    /.*\.hot-update\.json$/,
+    new workbox.strategies.NetworkOnly()
+  );
+
+  // Exclude webpack-dev-server from caching to avoid HMR conflicts
+  workbox.routing.registerRoute(
+    /^http:\/\/localhost:\d+\/sockjs-node/,
+    new workbox.strategies.NetworkOnly()
+  );
 
   // Cache the app shell - the core assets needed to load the app
   workbox.precaching.precacheAndRoute(appShellFiles);
