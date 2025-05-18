@@ -1,21 +1,53 @@
 {
-  "name": "Story Share App",
-  "short_name": "StoryShare",
-  "description": "Share your stories with photos and locations",
+  "name": "Story Sharing App",
+  "short_name": "Stories",
+  "description": "Share your stories with the world",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#777",
+  "theme_color": "#777777",
   "icons": [
     {
       "src": "/images/logo.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/images/logo.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshot1.png",
+      "sizes": "1280x720",
       "type": "image/png"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "orientation": "any",
+  "shortcuts": [
+    {
+      "name": "Add Story",
+      "url": "/#/add",
+      "description": "Add a new story",
+      "icons": [{ "src": "/images/logo.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Profile",
+      "url": "/#/profile",
+      "description": "View your profile",
+      "icons": [{ "src": "/images/logo.png", "sizes": "96x96" }]
     }
   ]
 }

@@ -4,6 +4,19 @@ import App from './pages/app';
 import { registerServiceWorker, subscribeUserToPush } from './utils/notification-helper';
 import 'regenerator-runtime';
 import Auth from './data/auth';
+import StoryIdb from './data/idb';
+
+// Immediately invoke async function to handle service worker registration
+const registerSW = async () => {
+  try {
+    return await registerServiceWorker('/service-worker.js');
+  } catch (error) {
+    console.error('Failed to register service worker:', error);
+    return null;
+  }
+};
+
+let swRegistration = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new App({
@@ -12,13 +25,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigationDrawer: document.querySelector('#navigation-drawer'),
   });
   
+  // First register service worker - before app rendering
+  swRegistration = await registerSW();
   
   // Then render the application
   await app.renderPage();
   
-  // Register service worker after app loaded
-  const swRegistration = await registerServiceWorker('/service-worker.js');
-
   // If user is authenticated, subscribe to push notifications after app renders
   if (Auth.isLoggedIn() && swRegistration) {
     try {
@@ -54,37 +66,44 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Add notification toggle button to profile page if user is logged in
   if (Auth.isLoggedIn()) {
+    const addNotificationButton = () => {
+      // Check if button already exists
+      if (!document.getElementById('notification-toggle')) {
+        const profileSection = document.querySelector('.profile-section');
+        if (profileSection) {
+          const notificationBtn = document.createElement('button');
+          notificationBtn.id = 'notification-toggle';
+          notificationBtn.className = 'btn btn-primary';
+          notificationBtn.textContent = 'Enable Notifications';
+          profileSection.appendChild(notificationBtn);
+          
+          // Update button state based on current subscription
+          const { updateSubscriptionButton, togglePushNotification } = require('./utils/notification-helper');
+          updateSubscriptionButton(swRegistration, notificationBtn);
+          
+          // Add event listener
+          notificationBtn.addEventListener('click', () => {
+            togglePushNotification(swRegistration, notificationBtn);
+          });
+        }
+      }
+    };
+    
+    // Initial check for profile page
+    if (window.location.hash === '#/profile') {
+      setTimeout(addNotificationButton, 300);
+    }
+    
+    // Add listener for navigation to profile page
     window.addEventListener('hashchange', () => {
-      const currentUrl = window.location.hash;
-      if (currentUrl === '#/profile') {
-        setTimeout(() => {
-          // Check if button already exists
-          if (!document.getElementById('notification-toggle')) {
-            const profileSection = document.querySelector('.profile-section');
-            if (profileSection) {
-              const notificationBtn = document.createElement('button');
-              notificationBtn.id = 'notification-toggle';
-              notificationBtn.className = 'btn btn-primary';
-              notificationBtn.textContent = 'Enable Notifications';
-              profileSection.appendChild(notificationBtn);
-              
-              // Update button state based on current subscription
-              const { updateSubscriptionButton, togglePushNotification } = require('./utils/notification-helper');
-              updateSubscriptionButton(swRegistration, notificationBtn);
-              
-              // Add event listener
-              notificationBtn.addEventListener('click', () => {
-                togglePushNotification(swRegistration, notificationBtn);
-              });
-            }
-          }
-        }, 300);
+      if (window.location.hash === '#/profile') {
+        setTimeout(addNotificationButton, 300);
       }
     });
   }
 });
 
-  // Accept HMR updates for development
-  if (module.hot) {
-    module.hot.accept();
-  }
+// Accept HMR updates for development
+if (module.hot) {
+  module.hot.accept();
+}

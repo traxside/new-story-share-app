@@ -1,8 +1,9 @@
 const path = require('path');
 const common = require('./webpack.common.js');
 const { merge } = require('webpack-merge');
+const { InjectManifest } = require('workbox-webpack-plugin');
 
-// Create a base configuration without the Workbox plugin
+// Create a base configuration
 const devConfig = merge(common, {
   mode: 'development',
   module: {
@@ -34,9 +35,8 @@ const devConfig = merge(common, {
   },
 });
 
-// Only add the Workbox plugin when not in watch mode
-if (process.env.WEBPACK_WATCH !== 'true') {
-  const { InjectManifest } = require('workbox-webpack-plugin');
+// Only add the InjectManifest plugin in production or explicitly when building
+if (process.env.NODE_ENV === 'production' || process.env.BUILD_SW === 'true') {
   devConfig.plugins.push(
     new InjectManifest({
       swSrc: path.resolve(__dirname, 'src/scripts/service-worker.js'),

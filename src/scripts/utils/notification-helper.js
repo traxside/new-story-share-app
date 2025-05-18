@@ -3,10 +3,10 @@ import Auth from '../data/auth';
 import { showAlert } from './index';
 
 // Register the service worker
-const registerServiceWorker = async () => {
+const registerServiceWorker = async (swPath) => {
   if ('serviceWorker' in navigator) {
     try {
-      const registration = await navigator.serviceWorker.register('../service-worker.js');
+      const registration = await navigator.serviceWorker.register(swPath);
       console.log('Service Worker registered with scope:', registration.scope);
       return registration;
     } catch (error) {
@@ -38,7 +38,7 @@ const subscribeUserToPush = async (swRegistration) => {
     // Check if service worker is registered and push is supported
     if (!swRegistration || !isPushNotificationSupported()) {
       console.log('Push notification not supported');
-    //   return null;
+      return null;
     }
     
     // Check if user is already subscribed
@@ -54,7 +54,7 @@ const subscribeUserToPush = async (swRegistration) => {
     if (!token) {
       console.log('User must be authenticated to subscribe to notifications');
       showAlert('You must be logged in to enable notifications', 'warning');
-    //   return null;
+      return null;
     }
 
     // Get permission from user
@@ -62,7 +62,7 @@ const subscribeUserToPush = async (swRegistration) => {
     if (permission !== 'granted') {
       console.log('Notification permission denied');
       showAlert('Notification permission denied', 'warning');
-    //   return null;
+      return null;
     }
 
     // VAPID key from the API
@@ -86,7 +86,7 @@ const subscribeUserToPush = async (swRegistration) => {
     if (response.error) {
       console.error('Failed to subscribe to push notifications:', response.message);
       showAlert('Failed to subscribe to push notifications', 'error');
-    //   return null;
+      return null;
     } else {
       console.log('Successfully subscribed to push notifications');
       showAlert('Push notifications enabled!', 'success');
@@ -95,7 +95,7 @@ const subscribeUserToPush = async (swRegistration) => {
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
     showAlert('Error enabling push notifications', 'error');
-    // return null;
+    return null;
   }
 };
 
