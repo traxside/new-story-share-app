@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Story Share App - Share your stories with photos and locations" />
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#777">
+    <link rel="shortcut icon" href="favicon.png">
+    <title>Story Share App</title>
+    
+    <!-- Add View Transition API support -->
+    <meta name="view-transition" content="same-origin" />
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+    crossorigin=""/>
+  </head>
+  <body>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+    integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+    crossorigin=""></script>
+    
+    
+    <header>
+      <div class="main-header container">
+        <a class="brand-name" href="#/">Story Share App</a>
+        <!-- Skip to content link for accessibility -->
+        <a href="#" class="skip-link">Skip to content</a> <!-- TODO-->
+
+        <button id="drawer-button" class="drawer-button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navigation-drawer">☰</button>
+        
+        <nav id="navigation-drawer" class="navigation-drawer" aria-label="Main navigation">
+          <ul id="nav-list" class="nav-list">
+            <li><a href="#/">Home</a></li>
+            <li><a href="#/about">About</a></li>
+            <li><a href="#/login">Login</a></li>
+            <li><a href="#/register">Register</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content" class="main-content" tabindex="-1"></main>
+
+    <footer class="footer">
+      <div class="container">
+        <p>&copy; 2025 Story Share App. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>
+

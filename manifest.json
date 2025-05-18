@@ -1,0 +1,16 @@
+{
+  "name": "Story Sharing App",
+  "short_name": "Stories",
+  "description": "Share your stories with the world",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3498db",
+  "icons": [
+    {
+      "src": "public/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
