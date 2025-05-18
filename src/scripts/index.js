@@ -2,6 +2,7 @@ import '../styles/styles.css';
 
 import App from './pages/app';
 import { registerServiceWorker, subscribeUserToPush } from './utils/notification-helper';
+import 'regenerator-runtime';
 import Auth from './data/auth';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -11,11 +12,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     navigationDrawer: document.querySelector('#navigation-drawer'),
   });
   
-  // Register service worker first (before rendering app)
-  const swRegistration = await registerServiceWorker('/service-worker.js');
   
   // Then render the application
   await app.renderPage();
+  
+  // Register service worker after app loaded
+  const swRegistration = await registerServiceWorker('/service-worker.js');
 
   // If user is authenticated, subscribe to push notifications after app renders
   if (Auth.isLoggedIn() && swRegistration) {
@@ -81,3 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+  // Accept HMR updates for development
+  if (module.hot) {
+    module.hot.accept();
+  }

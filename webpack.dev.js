@@ -28,5 +28,8 @@ module.exports = merge(common, {
     devMiddleware: {
       writeToDisk: true,
     },
+    // hot module replacement configuration
+    hot: true,
+    historyApiFallback: true,
   },
 });

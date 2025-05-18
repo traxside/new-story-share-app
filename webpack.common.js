@@ -1,7 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const WorkboxPlugin = require('workbox-webpack-plugin');
+const { InjectManifest } = require('workbox-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -11,6 +11,7 @@ module.exports = {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
+    publicPath: '/',
   },
   module: {
     rules: [
@@ -40,12 +41,14 @@ module.exports = {
           from: path.resolve(__dirname, 'manifest.json'),
           to: path.resolve(__dirname, 'dist/'),
         },
-        // Copy custom service worker
-        {
-          from: path.resolve(__dirname, 'src/scripts/service-worker.js'),
-          to: path.resolve(__dirname, 'dist/'),
-        },
       ],
+    }),
+    // InjectManifest
+    new InjectManifest({
+      swSrc: path.resolve(__dirname, 'src/scripts/service-worker.js'),
+      swDest: 'service-worker.js',
+      // Exclude hot update files
+      exclude: [/\.hot-update\.(js|json)$/],
     }),
   ],
 };
