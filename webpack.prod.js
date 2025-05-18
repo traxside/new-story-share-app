@@ -3,9 +3,9 @@ const common = require('./webpack.common.js');
 const { merge } = require('webpack-merge');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const WorkboxPlugin = require('workbox-webpack-plugin');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = merge(common, {
   mode: 'production',
@@ -47,10 +47,13 @@ module.exports = merge(common, {
     new MiniCssExtractPlugin({
       filename: '[name].[contenthash].css',
     }),
-    new WorkboxPlugin.InjectManifest({
-      swSrc: path.resolve(__dirname, 'src/scripts/service-worker.js'),
-      swDest: 'service-worker.js',
-      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, 'src/scripts/service-worker.js'),
+          to: path.resolve(__dirname, 'dist/service-worker.js'),
+        },
+      ],
     }),
   ],
   output: {

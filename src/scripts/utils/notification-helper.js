@@ -6,6 +6,7 @@ import { showAlert } from './index';
 const registerServiceWorker = async () => {
   if ('serviceWorker' in navigator) {
     try {
+      // Important: Register the service worker from the root path
       const registration = await navigator.serviceWorker.register('/service-worker.js');
       console.log('Service Worker registered with scope:', registration.scope);
       return registration;
@@ -62,7 +63,7 @@ const subscribeUserToPush = async (swRegistration) => {
       return;
     }
 
-    // VAPID key from the API
+    // VAPID key from the API - This is your public VAPID key
     const vapidPublicKey = 'BCCs2eonMI-6H2ctvFaWg-UYdDv387Vno_bzUzALpB442r2lCnsHmtrx8biyPi_E-1fSGABK_Qs_GlvPoJJqxbk';
     
     // Convert VAPID key to array buffer

@@ -8,8 +8,9 @@ const CACHE_NAME = 'story-app-v1';
 const assetsToCache = [
   './',
   './index.html',
-  './public/favicon.png',
-  './public/images/logo.png',
+  './favicon.png',
+  './manifest.json',
+  './images/logo.png',
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.7.1/dist/leaflet.js',
 ];
@@ -109,8 +110,8 @@ self.addEventListener('push', function(event) {
   const title = data.title || 'New Story!';
   const options = {
     body: data.message || 'Someone shared a new story!',
-    icon: './public/favicon.png',
-    badge: './public/favicon.png',
+    icon: './favicon.png',
+    badge: './favicon.png',
     data: {
       url: data.url || '/',
     },
